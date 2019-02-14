@@ -31,13 +31,15 @@ class ControllerWebClient(object):
     _headers = None  # prepared headers for all requests
     _isok = False  # flag to stop
     _session = None  # requests session object
+    _proxies = None # proxies for socks5
 
-    def __init__(self, baseurl, username, password, locale=None):
+    def __init__(self, baseurl, username, password, locale=None, proxies=None):
         self._baseurl = baseurl
         self._username = username
         self._password = password
         self._headers = {}
         self._isok = True
+        self._proxies = proxies
 
         # create session
         self._session = requests.Session()
@@ -53,6 +55,8 @@ class ControllerWebClient(object):
         # add retry to deal with closed keep alive connections
         self._session.mount('https://', requests.adapters.HTTPAdapter(max_retries=3))
         self._session.mount('http://', requests.adapters.HTTPAdapter(max_retries=3))
+
+        self._session.proxies = self._proxies
 
         # set locale headers
         self.SetLocale(locale)
