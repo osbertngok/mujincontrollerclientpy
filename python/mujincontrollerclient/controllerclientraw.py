@@ -17,7 +17,7 @@ import requests.auth
 import requests.adapters
 
 from . import json
-from . import APIServerError
+from . import APIServerError, ControllerClientError
 
 import logging
 log = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class ControllerWebClient(object):
     _session = None  # requests session object
     _proxies = None # proxies for socks5
 
-    def __init__(self, baseurl, username, password, locale=None, proxies=None):
+    def __init__(self, baseurl, username, password, locale=None, author=None, proxies=None):
         self._baseurl = baseurl
         self._username = username
         self._password = password
@@ -64,6 +64,9 @@ class ControllerWebClient(object):
         # set locale headers
         self.SetLocale(locale)
 
+        # set author header
+        self.SetAuthor(author)
+
     def __del__(self):
         self.Destroy()
 
@@ -85,7 +88,14 @@ class ControllerWebClient(object):
             language = locale.split('.', 1)[0].replace('_', '-').lower()
         self._headers['Accept-Language'] = language
 
+    def SetAuthor(self, author=None):
+        if author is not None and len(author) > 0:
+            self._headers['X-Author'] = author
+
     def Request(self, method, path, timeout=5, headers=None, **kwargs):
+        if timeout < 1e-6:
+            raise ControllerClientError('timeout value (%s sec) is too small' % timeout)
+
         url = self._baseurl + path
 
         # set all the headers prepared for this client
